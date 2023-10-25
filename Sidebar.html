@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+    <style>
+    .branding-below {
+      bottom: 54px;
+      top: 0;
+    }
+    
+    .branding-text {
+      left: 7px;
+      position: relative;
+      top: 3px;
+    }
+    
+    .logo {
+      vertical-align: middle;
+    }
+    
+    .width-100 {
+      width: 100%;
+      box-sizing: border-box;
+      -webkit-box-sizing : border-box;‌
+      -moz-box-sizing : border-box;
+    }
+    
+    label {
+      font-weight: bold;
+    }
+    
+    #creator-options,
+    #respondent-options {
+      background-color: #eee;
+      border-color: #eee;
+      border-width: 5px;
+      border-style: solid;
+      display: none;
+    }
+    
+    #creator-email,
+    #respondent-email,
+    #button-bar,
+    #submit-subject {
+      margin-bottom: 10px;
+    }
+    
+    #response-step {
+      display: inline;
+    }
+    
+    </style>
+  </head>
+  <body>
+    <div class="sidebar branding-below">
+      <form>
+        <div class="block">
+          <input type="checkbox" id="limitResponses">
+          <label for="limitResponses">Limit Form Responses</label>
+        </div>
+        <div class="block form-group" id="creator-options">
+          <label for="maxResponses">
+            Maximum number of responses
+          </label>
+          <input type="number" class="width-100" id="maxResponses"> (default unlimited)
+        </div>
+    
+        <div class="block" id="button-bar">
+          <button class="action" id="save-settings">Save</button>
+        </div>
+      </form>
+    </div>
+    
+    <div class="sidebar bottom">
+      <span class="gray branding-text">Über-simple Google Forms Response Limiter</span>
+    </div>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    <script>
+      /**
+       * On document load, assign required handlers to each element,
+       * and attempt to load any saved settings.
+       */
+      $(function() {
+        $('#save-settings').click(saveSettingsToServer);
+        $('#limitResponses').click(toggleResponseLimiting);
+        $('#maxResponses').change(validateNumber);
+        google.script.run
+           .withSuccessHandler(loadSettings)
+           .withFailureHandler(showStatus)
+           .withUserObject($('#button-bar').get())
+           .getSettings();
+      });
+    
+      /**
+       * Callback function that populates the notification options using
+       * previously saved values.
+       *
+       * @param {Object} settings The saved settings from the client.
+       */
+      function loadSettings(settings) {
+        $('#maxResponses').val(settings.maxResponses);
+  
+        $('#submit-subject').val(!settings.responseSubject ?
+           'Thank you for filling out our form!' :
+           settings.responseSubject);
+           
+        $('#submit-notice').val(!settings.responseText ?
+           'Thank you for responding to our form!' :
+           settings.responseText);
+           
+        
+    
+        if (settings.limitResponses === 'true') {
+          $('#limitResponses').prop('checked', true);
+          $('#creator-options').show();
+        }
+      }
+    
+      /**
+       * Toggles the visibility of the form creator notification options.
+       */
+      function toggleResponseLimiting() {
+        $('#status').remove();
+        if ($('#limitResponses').is(':checked')) {
+          $('#creator-options').show();
+        } else {
+          $('#creator-options').hide();
+        }
+      }
+    
+      /**
+       * Ensures that the entered step is a number between 1
+       * and 99999, inclusive.
+       */
+      function validateNumber() {
+        var value = $('#maxResponses').val();
+        if (value < 1) {
+          $('#maxResponses').val(1);
+        } else if (value > 99999) {
+          $('#maxResponses').val(99999);
+        }
+      }
+    
+      /**
+       * Collects the options specified in the add-on sidebar and sends them to
+       * be saved as Properties on the server.
+       */
+      function saveSettingsToServer() {
+        this.disabled = true;
+        $('#status').remove();
+        var limitResponses = $('#limitResponses').is(':checked');
+        var maxResponses = $('#maxResponses').val();
+        var settings = {
+          'limitResponses': limitResponses,
+          'maxResponses': maxResponses,
+        };
+    
+        // Save the settings on the server
+        google.script.run
+            .withSuccessHandler(
+              function(msg, element) {
+                showStatus('Saved settings', $('#button-bar'));
+                element.disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showStatus(msg, $('#button-bar'));
+                element.disabled = false;
+              })
+            .withUserObject(this)
+            .saveSettings(settings);
+      }
+    
+      /**
+       * Inserts a div that contains an status message after a given element.
+       *
+       * @param {String} msg The status message to display.
+       * @param {Object} element The element after which to display the Status.
+       */
+      function showStatus(msg, element) {
+         var div = $('<div>')
+             .attr('id', 'status')
+             .attr('class','error')
+             .text(msg);
+        $(element).after(div);
+      }
+    </script>
+  </body>
+</html>
