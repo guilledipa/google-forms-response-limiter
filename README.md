@@ -1,6 +1,6 @@
 # Google forms – Response limiter
 
-This is a *very* simplisting response limiter that only accounts for number of responses in a Google Form.
+This is an *Über* simple response limiter for Google Forms that only accounts for number of responses in a Google Form.
 
 ## Install
 
